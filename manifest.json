@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "Scopus AI Scanner V2.1",
+  "description": "Bulk-scan Scopus search results (title, abstract, DOI) without touching your mouse, then grade them against YOUR research topics with the free Gemini API.",
+  "version": "2.1.1",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "action": {
+    "default_title": "Scopus AI Scanner V2",
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "48": "icons/icon-48.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["storage", "unlimitedStorage", "activeTab", "scripting"],
+  "host_permissions": [
+    "https://*.scopus.com/*",
+    "https://generativelanguage.googleapis.com/*",
+    "https://api.crossref.org/*",
+    "https://api.unpaywall.org/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://*.scopus.com/*"],
+      "js": ["content/scopus-scanner.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "commands": {
+    "open_dashboard": {
+      "suggested_key": { "default": "Alt+Shift+S" },
+      "description": "Open the Scopus AI Scanner dashboard"
+    }
+  }
+}

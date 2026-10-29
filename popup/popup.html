@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Scopus AI Scanner V2.1.1</title>
+  <style>
+    body {
+      margin: 0;
+      width: 320px;
+      font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: #1c1917;
+      background: #fcfbfa;
+      -webkit-font-smoothing: antialiased;
+    }
+    header {
+      padding: 14px 16px;
+      background: #1c1917;
+      color: #f5f0eb;
+      border-bottom: 1px solid #2e2823;
+    }
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge-v {
+      font-size: 11px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: #2e2823;
+      color: #d6cfc5;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    header h1 {
+      margin: 0;
+      font-family: "Newsreader", "Playfair Display", "Merriweather", "Georgia", "Cambria", serif;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    header p {
+      margin: 4px 0 0;
+      font-size: 12px;
+      color: #a8a29e;
+      line-height: 1.35;
+    }
+    main {
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: #fcfbfa;
+    }
+    button {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      border: 1px solid #ece7de;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font: 600 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.12s ease;
+      box-shadow: 0 1px 3px rgba(35, 30, 25, 0.04);
+    }
+    button:active {
+      transform: translateY(1px);
+    }
+    .primary {
+      background: #b91c1c;
+      border-color: #b91c1c;
+      color: #ffffff;
+    }
+    .primary:hover {
+      background: #991b1b;
+      border-color: #991b1b;
+    }
+    .alt {
+      background: #ffffff;
+      border-color: #ece7de;
+      color: #1c1917;
+    }
+    .alt:hover {
+      background: #f8f6f2;
+      border-color: #ded7c9;
+    }
+    small {
+      font-size: 11.5px;
+      font-weight: 400;
+      margin-top: 3px;
+      line-height: 1.3;
+    }
+    .primary small {
+      color: #fecaca;
+    }
+    .alt small {
+      color: #78716c;
+    }
+    #status {
+      min-height: 16px;
+      font-size: 11.5px;
+      color: #c2410c;
+      padding-top: 2px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand-row">
+      <h1>Scopus AI Scanner</h1>
+      <span class="badge-v">v2.1.1</span>
+    </div>
+    <p>Bulk-scan Scopus abstracts and grade relevance with AI</p>
+  </header>
+  <main>
+    <button class="primary" id="dash">
+      Open dashboard
+      <small>Manage research topics, view grading matrix, and export</small>
+    </button>
+    <button class="alt" id="show">
+      Show scanner on this tab
+      <small>Activate floating scanner on custom or university proxy URLs</small>
+    </button>
+    <div id="status"></div>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>

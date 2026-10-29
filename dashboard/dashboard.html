@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Scopus AI Scanner V2.1.1 — Dashboard</title>
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="logo">S</span><div><b>Scopus AI Scanner</b><small>v2.1.1 · Scopus only</small></div></div>
+    <div class="project-box">
+      <label for="projectSelect" class="sr">Project</label>
+      <select id="projectSelect" title="Switch research project"></select>
+      <button class="btn ghost" id="newProjectBtn" title="Create a new project"><svg class="icon-svg" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>New</button>
+    </div>
+    <nav class="tabs" id="tabs">
+      <button data-tab="papers" class="active">Papers</button>
+      <button data-tab="topics">Topics &amp; Rubric</button>
+      <button data-tab="matrix">Grading Matrix</button>
+      <button data-tab="settings">Settings</button>
+    </nav>
+    <div class="top-right">
+      <div class="status-pills">
+        <span class="status-pill"><span class="status-dot green"></span>System Online</span>
+        <span class="status-pill" id="keyChip" title="Gemini API key status"><span class="status-dot green"></span>API: —</span>
+      </div>
+      <button class="btn ghost icon" id="themeBtn" title="Toggle light / dark" aria-label="Toggle theme"><svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg></button>
+    </div>
+  </header>
+
+  <div id="toastHost" aria-live="polite"></div>
+
+  <main>
+    <!-- ================= PAPERS ================= -->
+    <section id="tab-papers" class="tab active">
+      <div class="section-lead">
+        <div class="eyebrow">LITERATURE CORPUS &amp; EVALUATION LEDGER</div>
+        <div class="lead-sub">Real-time systematic review tracking, relevance scoring &amp; synthesis</div>
+      </div>
+      <div class="metrics" id="metrics"></div>
+
+      <div class="card queue" id="queueCard">
+        <div class="eyebrow"><svg class="icon-svg" viewBox="0 0 24 24" style="width:12px;height:12px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg> AI EVALUATION ENGINE</div>
+        <div class="queue-main">
+          <div>
+            <h3>Automated Abstract Relevance Scoring</h3>
+            <p class="muted" id="queueText">Scan papers on Scopus, review them below, then start grading.</p>
+          </div>
+          <div class="queue-actions">
+            <button class="btn primary" id="startBtn"><svg class="icon-svg" viewBox="0 0 24 24" style="fill:currentColor;stroke:none;"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>Start AI evaluation</button>
+            <button class="btn" id="pauseBtn" hidden><svg class="icon-svg" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>Pause</button>
+            <button class="btn" id="resumeBtn" hidden><svg class="icon-svg" viewBox="0 0 24 24" style="fill:currentColor;stroke:none;"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>Resume</button>
+            <button class="btn ghost" id="clearQueueBtn" hidden>Clear queue</button>
+          </div>
+        </div>
+        <div class="progress" id="progress" hidden><i id="progressBar"></i></div>
+      </div>
+
+      <div class="toolbar">
+        <input type="search" id="searchInput" placeholder="Search title, author, abstract…" />
+        <select id="fTopic" title="Filter by best topic"></select>
+        <select id="fTier" title="Filter by tier">
+          <option value="all">All tiers</option><option>Tier 1</option><option>Tier 2</option><option>Tier 3</option><option value="ungraded">Not graded</option>
+        </select>
+        <select id="fDecision" title="Filter by your decision">
+          <option value="all">Any decision</option><option value="Include">Include</option><option value="Maybe">Maybe</option><option value="Exclude">Exclude</option><option value="none">Undecided</option>
+        </select>
+        <select id="sortBy" title="Sort order">
+          <option value="order">Scan order</option><option value="score">Highest score</option><option value="year">Newest</option><option value="citations">Most cited</option><option value="title">Title A–Z</option>
+        </select>
+        <span class="spacer"></span>
+        <div class="menu">
+          <button class="btn" id="exportBtn"><svg class="icon-svg" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>Export</button>
+          <div class="menu-pop" id="exportMenu" hidden>
+            <button data-export="xlsx">Excel workbook (.xlsx)</button>
+            <button data-export="csv">CSV (.csv)</button>
+            <button data-export="bib">BibTeX (.bib)</button>
+            <button data-export="bib-copy">Copy all BibTeX</button>
+          </div>
+        </div>
+        <div class="menu">
+          <button class="btn ghost icon" id="moreBtn" title="More options" aria-label="More options"><svg class="icon-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.5"></circle><circle cx="19" cy="12" r="1.5"></circle><circle cx="5" cy="12" r="1.5"></circle></svg></button>
+          <div class="menu-pop" id="moreMenu" hidden>
+            <button data-more="resolve-doi">Find missing DOIs (CrossRef)</button>
+            <button data-more="requeue-errors">Retry failed papers</button>
+            <button data-more="regrade-all">Re-grade ALL papers</button>
+            <button data-more="delete-ungraded">Delete ungraded papers</button>
+            <button data-more="delete-all" class="danger">Delete ALL papers in project</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card table-card">
+        <div class="table-scroll">
+          <table id="papersTable">
+            <thead>
+              <tr><th class="w-check"><input type="checkbox" id="checkAll" title="Select all visible" /></th><th class="w-num">#</th><th class="w-score">Grade</th><th class="w-topic">Topic</th><th>Paper</th><th class="w-links">Links</th><th class="w-act"></th></tr>
+            </thead>
+            <tbody id="papersBody"></tbody>
+          </table>
+        </div>
+        <div class="empty" id="emptyState" hidden>
+          <div class="empty-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg></div>
+          <h3>No papers yet</h3>
+          <p>Open a Scopus results page, set it to <b>100 results per page</b>, and press <b>Scan this page</b> in the floating panel. The papers will appear here automatically.</p>
+        </div>
+      </div>
+      <p class="muted small" id="selectionInfo"></p>
+    </section>
+
+    <!-- ================= TOPICS ================= -->
+    <section id="tab-topics" class="tab">
+      <div class="card">
+        <div class="eyebrow">RESEARCH CONTEXT &amp; THESIS DEFINITION</div>
+        <div class="card-head">
+          <div><h2>Your research</h2><p class="muted">The AI grades every abstract against what you describe here. Change it any time — it is saved automatically.</p></div>
+          <div class="row">
+            <select id="presetSelect"></select>
+            <button class="btn" id="loadPresetBtn">Load preset into this project</button>
+          </div>
+        </div>
+        <div class="grid2">
+          <label>Project name<input id="pName" /></label>
+          <label>Thesis / research title<input id="pTitle" placeholder="e.g. Machine-learning forecasting of residential load" /></label>
+        </div>
+        <label>Study context <span class="muted">(2–5 sentences: what you are building/studying — the AI uses this to judge usefulness)</span>
+          <textarea id="pContext" rows="4" placeholder="Describe your study, system, scope and constraints…"></textarea>
+        </label>
+        <div class="row">
+          <button class="btn primary" id="suggestBtn"><svg class="icon-svg" viewBox="0 0 24 24"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3z"></path></svg>Suggest topics &amp; keywords with AI</button>
+          <span class="muted small">Uses your free Gemini key. You can edit everything afterwards.</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="eyebrow">LITERATURE TAXONOMY &amp; SEARCH SECTIONS</div>
+        <div class="card-head"><div><h2>Topics</h2><p class="muted">Each topic = one literature-review section (like Topics A–F). Keywords drive the instant preview and the Scopus search string.</p></div>
+          <button class="btn primary" id="addTopicBtn"><svg class="icon-svg" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>Add topic</button></div>
+        <div id="topicsList" class="topics"></div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="eyebrow">EVALUATION METRICS</div>
+          <div class="card-head"><div><h2>Grading rubric</h2><p class="muted">Each criterion is scored 0–3 by the AI.</p></div><button class="btn" id="addCriterionBtn"><svg class="icon-svg" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>Add criterion</button></div>
+          <div id="criteriaList" class="stack"></div>
+          <div class="grid3">
+            <label class="check"><input type="checkbox" id="recencyOn" /> Add automatic Recency score</label>
+            <label>Tier 1 ≥ (%)<input type="number" id="tier1Pct" min="1" max="100" /></label>
+            <label>Tier 2 ≥ (%)<input type="number" id="tier2Pct" min="1" max="100" /></label>
+          </div>
+          <p class="muted small" id="rubricHint"></p>
+        </div>
+        <div class="card">
+          <div class="eyebrow">SYSTEMATIC EXTRACTION</div>
+          <div class="card-head"><div><h2>Deep-note fields</h2><p class="muted">What the AI extracts for every paper (Excel “Deep Notes” sheet).</p></div><button class="btn" id="addNoteBtn"><svg class="icon-svg" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>Add field</button></div>
+          <div id="notesList" class="stack"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= MATRIX ================= -->
+    <section id="tab-matrix" class="tab">
+      <div class="card">
+        <div class="eyebrow">MATURITY &amp; FIT MATRIX</div>
+        <div class="card-head"><div><h2>Grading matrix per topic</h2><p class="muted">Each graded paper is counted under its best-matching topic.</p></div></div>
+        <div id="matrixTable"></div>
+      </div>
+      <div class="card">
+        <div class="eyebrow">CROSS-TOPIC AFFINITY</div>
+        <div class="card-head"><div><h2>Paper × topic relevance heat-map</h2><p class="muted">0–3 relevance of each graded paper to every topic. Click a row to open the paper.</p></div></div>
+        <div class="table-scroll" id="heatmap"></div>
+      </div>
+    </section>
+
+    <!-- ================= SETTINGS ================= -->
+    <section id="tab-settings" class="tab">
+      <div class="card">
+        <div class="eyebrow">LLM ENGINE CREDENTIALS</div>
+        <h2>Gemini API (free tier)</h2>
+        <ol class="steps">
+          <li>Go to <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer">aistudio.google.com/apikey</a> and sign in with any Google account.</li>
+          <li>Press <b>Create API key</b> (no credit card or billing needed for the free tier).</li>
+          <li>Paste the key below. It is stored only in this browser profile.</li>
+        </ol>
+        <div class="grid2">
+          <label>API key<input type="password" id="sApiKey" placeholder="AIza…" autocomplete="off" /></label>
+          <label>Model<select id="sModel"></select></label>
+        </div>
+        <div class="grid2">
+          <label>Seconds between requests <span class="muted">(free tier ≈ 15 requests/min → 4s is safe)</span><input type="number" id="sInterval" min="1" max="60" step="0.5" /></label>
+          <label>Unpaywall e-mail <span class="muted">(optional, enables “Find free PDF”)</span><input type="email" id="sEmail" placeholder="you@school.edu" /></label>
+        </div>
+        <div class="row"><button class="btn primary" id="saveSettingsBtn">Save settings</button><button class="btn" id="testKeyBtn">Test key</button><span id="testResult" class="muted"></span></div>
+      </div>
+      <div class="card">
+        <h2>Optional links</h2>
+        <label class="check"><input type="checkbox" id="sSciHub" /> Show a “Sci-Hub” link on papers <span class="muted">(off by default — check your school’s policy and local law before enabling)</span></label>
+        <label>Sci-Hub address<input id="sSciHubUrl" placeholder="https://sci-hub.se/" /></label>
+      </div>
+      <div class="card">
+        <h2>Your data</h2>
+        <p class="muted">Everything lives in this browser (IndexedDB). Nothing is sent anywhere except abstracts → Google Gemini when you press <i>Start AI evaluation</i>.</p>
+        <div class="row">
+          <button class="btn" id="exportProjectBtn">Export this project (.json)</button>
+          <button class="btn" id="importProjectBtn">Import project (.json)</button>
+          <input type="file" id="importProjectFile" accept="application/json,.json" hidden />
+          <button class="btn danger" id="deleteProjectBtn">Delete this project</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- paper detail -->
+  <dialog id="paperDialog"><div id="paperDialogBody"></div></dialog>
+  <!-- new project -->
+  <dialog id="newProjectDialog">
+    <form method="dialog" class="dlg">
+      <h3>New project</h3>
+      <label>Name<input id="npName" value="New Thesis" /></label>
+      <label>Start from<select id="npPreset"></select></label>
+      <div class="row end"><button class="btn ghost" value="cancel">Cancel</button><button class="btn primary" id="npCreate" value="ok">Create</button></div>
+    </form>
+  </dialog>
+  <!-- suggestions -->
+  <dialog id="suggestDialog"><div id="suggestBody" class="dlg"></div></dialog>
+
+  <script src="../vendor/xlsx.full.min.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
